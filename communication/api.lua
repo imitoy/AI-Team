@@ -11,34 +11,38 @@ end
 
 api.openai = {}
 
-
-api.openai.defaultmessage = {
-    system = "You are a helpful assistant.",
-}
+api.openai.__index = api.openai
 
 function api.openai.generatemessage(avatar_name)
-    if avatar_name == nil then
-        return api.openai.defaultmessage
-    end
-    for i, v in ipairs(avatar) do
-        if v.name == avatar_name then
-            return v
-        end
-    end
-    return nil
+    return {{role = "system", content = avatar.getAvatar(avatar_name or "Default").system}}
 end
 
-function api.openai.create(model)
-    local OpenAI = luapython.impor("openai.OpenAI")
+function api.openai.create(model, model_name, avatar_name)
+    local openai_api = {}
+    setmetatable(openai_api, api.openai)
+    local OpenAI = luapython.import("openai.OpenAI")
     local client = OpenAI({
         api_key = model.authentication.api_key,
         base_url = model.base_url
     })
-    return client, model
+    openai_api.client = client
+    openai_api.model = model
+    openai_api.model_name = model_name
+    openai_api.messages = api.openai.generatemessage(avatar_name)
+    openai_api.completion_create = {
+        model = model_name,
+        messages = openai_api.messages,
+        stream = true,
+    }
+
+    return openai_api
 end
 
-function api.openai.send(client, model, model_name, messages)
+function api.openai:send(message)
     do
+        local model = self.model
+        local model_name = self.model_name
+        local client = self.client
         local find = false
         for i, v in ipairs(model.models) do
             if v == model_name then
@@ -49,25 +53,29 @@ function api.openai.send(client, model, model_name, messages)
             error("api.openai,send: model_name " .. model_name .. " not found")
         end
     end
-    if type(messages) ~= "table" then
-        error("api.openai.send: messages: table expected, got " .. type(messages))
-    end
-    local response = client.chat.completions.create({
-        model = model_name,
-        messages = messages,
-        stream = true
+    table.insert(self.messages, {
+        role = "user",
+        content = message
     })
-    return response
+    local response = self.client.chat.completions.create(self.completion_create)
+    self.response = response
 end
 
-function api.openai.get(response, messages)
-    local message = ""
-    for chunk in response() do
-        local stream = chunk.choices[0].delta.content
-        message = message .. stream
-        coroutine.yield(false, stream)
+function api.openai:get()
+    local function getf()
+        local message = ""
+        for chunk in self.response() do
+            local stream = chunk.choices[0].delta.content or chunk.choices[0].delta.reasoning_content
+            message = message .. (stream or "")
+            coroutine.yield(false, stream, chunk.choices[0].delta.content or "")
+        end
+        table.insert(self.messages, {
+            role = "assistant",
+            content = message
+        })
+        return true, message
     end
-    return true, messages
+    return getf
 end
 
 return api
