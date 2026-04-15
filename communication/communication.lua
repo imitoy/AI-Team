@@ -76,6 +76,7 @@ function cmanager:new(model)
     setmetatable(mcmanager, self)
     mcmanager.model = model
     mcmanager.clist = {}
+    mcmanager.ccurrent = nil
     return mcmanager
 end
 
@@ -86,5 +87,42 @@ function cmanager:newCommunication(content, avatar_name)
         error("Avatar "..avatar_name.." not found")
     end
     local c = communication:new(model, avatar_obj)
+    table.insert(self.clist, c)
+    self.ccurrent = c
+    if content then
+        self:send(content)
+    end
+end
 
-return communication
+function cmanager:send(content)
+    local c = self.ccurrent
+    local f = c:send(content)
+    local co = coroutine.create(f)
+    local message
+    do
+        local p1, p2 = false, false
+        while true do
+            local ret, finished, stream, is_reasoning = coroutine.resume(co)
+            if not ret then
+                error("Execute failed: "..finished)
+            elseif finished then
+                message = stream
+                break
+            end
+            if is_reasoning == true then
+                if p1 == false then
+                    print("<Reasoning>")
+                    p1 = true
+                end
+            elseif is_reasoning == false then
+                if p2 == false then
+                    print("</Reasoning>")
+                    p2 = true
+                end
+            end
+        end
+    end
+    return message
+end
+
+return cmanager

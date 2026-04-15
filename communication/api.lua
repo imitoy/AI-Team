@@ -83,10 +83,12 @@ end
 function api.openai:get()
     local function getf()
         local message = ""
+        local reasoning = true
         for chunk in self.response() do
+            reasoning = chunk.choices[0].delta.content == nil
             local stream = chunk.choices[0].delta.content or chunk.choices[0].delta.reasoning_content
             message = message .. (stream or "")
-            coroutine.yield(false, stream, chunk.choices[0].delta.content or "")
+            coroutine.yield(false, stream, reasoning)
         end
         table.insert(self.messages, {
             role = "assistant",
