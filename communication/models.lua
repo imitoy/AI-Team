@@ -54,13 +54,13 @@ models.deepseek = {
                 local file_name = input.file_name
                 local content = input.content
                 -- Write content to the specified file
-                local file = io.open(file_name, "w")
+                local file, errmsg = io.open(file_name, "w")
                 if file then
                     file:write(content)
                     file:close()
                     return { success = true, message = "File written successfully" }
                 else
-                    return { success = false, message = "Failed to write file" }
+                    return { success = false, message = "Failed to write file: "..errmsg }
                 end
             end
         },
@@ -87,24 +87,24 @@ models.deepseek = {
             action = function (input)
                 local file_name = input.file_name
                 -- Read content from the specified file
-                local file = io.open(file_name, "r")
+                local file, errmsg = io.open(file_name, "r")
                 if file then
                     local content = file:read("*a")
                     file:close()
                     return { success = true, content = content }
                 else
-                    return { success = false, message = "Failed to read file" }
+                    return { success = false, message = "Failed to read file:"..errmsg }
                 end
             end
         },
         {
             name = "edit_file",
-            description = "Edit content of a file. Input should be in JSON format: {\"file_name\": \"example.txt\", \"content\": \"new file content\"}",
+            description = "Edit content of a file with replacement. Input should be in JSON format: {\"file_name\": \"example.txt\", \"replace\": \"old content\", \"content\": \"new file content\"}",
             tool = {
                 type = "function",
                 ["function"] = {
                     name = "edit_file",
-                    description = "Edit content of a file. Input should be in JSON format: {\"file_name\": \"example.txt\", \"content\": \"new file content\"}",
+                    description = "Edit content of a file with replacement. Input should be in JSON format: {\"file_name\": \"example.txt\", \"replace\": \"old content\", \"content\": \"new file content\"}",
                     parameters = {
                         type = "object",
                         properties = {
@@ -121,21 +121,31 @@ models.deepseek = {
                                 description = "The new content to write to the file"
                             }
                         },
-                        required = {"file_name", "content"}
+                        required = {"file_name", "replace", "content"}
                     }
                 }
             },
             action = function (input)
                 local file_name = input.file_name
+                local replace = input.replace
                 local content = input.content
-                -- Write content to the specified file
-                local file = io.open(file_name, "w")
+                -- Read the existing file content
+                local file, errmsg = io.open(file_name, "r")
+                if not file then
+                    return { success = false, message = "Failed to read file:"..errmsg }
+                end
+                local existing_content = file:read("*a")
+                file:close()
+                -- Replace the specified content
+                existing_content = string.gsub(existing_content, replace, content)
+                -- Write the updated content back to the file
+                file, errmsg = io.open(file_name, "w")
                 if file then
-                    file:write(content)
+                    file:write(existing_content)
                     file:close()
                     return { success = true, message = "File edited successfully" }
                 else
-                    return { success = false, message = "Failed to edit file" }
+                    return { success = false, message = "Failed to edit file:"..errmsg }
                 end
             end
         },
@@ -155,12 +165,14 @@ models.deepseek = {
                 }
             },
             action = function (input)
-                local files = {}
-                local p = io.popen("ls")
-                for file in io.popen("ls"):lines() do
-                    table.insert(files, file)
+                local files_content
+                local p = io.popen("ls -R")
+                if not p then
+                    return { success = false, message = "Failed to list files" }
                 end
-                return { success = true, files = files }
+                files_content = p:read("*a")
+                p:close()
+                return { success = true, files = files_content }
             end
         },
         {
@@ -185,7 +197,12 @@ models.deepseek = {
             },
             action = function (input)
                 local command = input.command
-                local result = io.popen(command):read("*a")
+                local p = io.popen(command)
+                if not p then
+                    return { success = false, message = "Failed to run command" }
+                end
+                local result = p:read("*a")
+                p:close()
                 return { success = true, result = result }
             end
         }
