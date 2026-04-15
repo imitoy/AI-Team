@@ -2,6 +2,7 @@ local api = {}
 
 local luapython = require "luapython"
 local models = require "models"
+local json = require "json"
 
 function api.select(model)
     local model_info = models[model]
@@ -34,7 +35,7 @@ function api.openai.create(model, avatar)
     for _, tool in ipairs(models.tools)do
         local add = false
         for _, tool_name in ipairs(avatar.tools)do
-            if tool_name == tool.name then
+            if tool_name == tool.name and tool.tool then
                 add = true
                 break
             end
@@ -84,17 +85,39 @@ function api.openai:get()
     local function getf()
         local message = ""
         local reasoning = true
+        local tools = {}
         for chunk in self.response() do
-            reasoning = chunk.choices[0].delta.content == nil
-            local stream = chunk.choices[0].delta.content or chunk.choices[0].delta.reasoning_content
+            reasoning = chunk.choices[0].delta.reasoning_content ~= nil
+            local stream = chunk.choices[0].delta.content or chunk.choices[0].delta.reasoning_content or ""
             message = message .. (stream or "")
+            
+            if chunk.choices[0].delta.tool_calls ~= nil then
+                for _, tool_call in ipairs(luapython.astable(chunk.choices[0].delta.tool_calls)) do
+                    local index = tool_call.index + 1
+                    tools[index] = tools[index] or {}
+                    tools[index].name = (tools[index].name or "") .. tool_call.name
+                    tools[index].arguments = (tools[index].arguments or "") .. tool_call.arguments
+                    tools[index].id = tools[index].id or tool_call.id
+                    stream = stream .. (tool_call.name or tool_call.arguments or "")
+                end
+            end
+
             coroutine.yield(false, stream, reasoning)
         end
         table.insert(self.messages, {
             role = "assistant",
             content = message
         })
-        return true, message
+        local index = 1
+        local function tool_call_callback()
+            local result = coroutine.yield(tools[index])
+            table.insert(self.messages, {
+                role = "assistant",
+                content = tools[index]
+            })
+        end
+        local cocall = coroutine.create(tool_call_callback)
+        return true, message, cocall
     end
     return getf
 end

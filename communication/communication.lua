@@ -81,16 +81,16 @@ function cmanager:new(model)
 end
 
 function cmanager:newCommunication(content, avatar_name)
-    model = model or self.model
     local avatar_obj = avatar.getAvatar(avatar_name)
     if not avatar_obj then
         error("Avatar "..avatar_name.." not found")
     end
+    local model = avatar_obj.model or self.model
     local c = communication:new(model, avatar_obj)
     table.insert(self.clist, c)
     self.ccurrent = c
     if content then
-        self:send(content)
+        return self:send(content)
     end
 end
 
@@ -98,7 +98,7 @@ function cmanager:send(content)
     local c = self.ccurrent
     local f = c:send(content)
     local co = coroutine.create(f)
-    local message
+    local message, tools
     do
         local p1, p2 = false, false
         while true do
@@ -107,6 +107,7 @@ function cmanager:send(content)
                 error("Execute failed: "..finished)
             elseif finished then
                 message = stream
+                tools = is_reasoning
                 break
             end
             if is_reasoning == true then
@@ -122,7 +123,41 @@ function cmanager:send(content)
             end
         end
     end
-    return message
+    return message, tools
+end
+
+function cmanager:call(tool_name, arguments)
+    local tools = self.model.tools
+    for _, tool in ipairs(tools) do
+        if tool.name == tool_name then
+            if tool.action then
+                local result = tool.action(arguments)
+                return true, result
+            end
+        end
+    end
+    return false, nil
+end
+
+function cmanager:start()
+    print("Welcome to the AI Team Communication System!")
+    print("Type your message and press Enter to send:")
+    local content = io.read()
+    local avatar_name = "项目经理"
+    while true do
+        local response, tools = self:newCommunication(content, avatar_name)
+        local tool_call, result = false, {}
+        if tools then
+            for _, tool in ipairs(tools) do
+                local success, res = self:call(tool.name, tool.arguments)
+                if success then
+                    tool_call = true
+                    table.insert(result, res)
+                end
+            end
+        end
+
+    end
 end
 
 return cmanager
