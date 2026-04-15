@@ -1,19 +1,49 @@
 local api = require("api")
 local avatar = require("avatar")
 
+local _G = _G
+
+do
+    local registered = {}
+    AskProceed = function(tag)
+        if registered[tag] then
+            return true
+        end
+        print("Proceed?[(Y)es/(n)o/(a)bort/yesforall]")
+        local input = io.read()
+        if input == "Y" or input == "y" then
+            return true
+        elseif input == "n" or input == "N" then
+            return false
+        elseif input == "a" or input == "A" then
+            print("Abort.")
+            os.exit(0)
+        elseif input == "yesforall" then
+            registered[tag] = true
+            return true
+        else
+            print("Invalid input. Please enter 'Y', 'n', 'a', or 'yesforall'.")
+            return AskProceed(tag)
+        end
+    end
+end
+
 local communication = {}
 
 communication.__index = communication
 
-function communication:new(model, model_name, avatar_name)
+function communication:new(model, avatar_obj)
     local mcommunication = {}
     setmetatable(mcommunication, self)
+
+    local avatar_name = avatar_obj.name
+
     mcommunication.register = true
-    mcommunication.api = api[model.api_type].create(model, model_name, avatar_name)
-    mcommunication.avatar_name = avatar_name or "Default"
-    mcommunication.model_name = model_name
+    mcommunication.api = api[model.api_type].create(model, avatar_obj)
+    mcommunication.avatar_name = avatar_name
+    mcommunication.model_name = model.name
     mcommunication.model = model
-    local avatar_obj = avatar.getAvatar(avatar_name)
+    local avatar_obj = avatar_obj
     if not avatar_obj then
         error("avatar " .. avatar_name .. " not found")
     end
