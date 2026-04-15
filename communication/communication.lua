@@ -37,4 +37,24 @@ function communication:send(content)
     return self.api:get()
 end
 
+local cmanager = {}
+
+cmanager.__index = cmanager
+
+function cmanager:new(model)
+    local mcmanager = {}
+    setmetatable(mcmanager, self)
+    mcmanager.model = model
+    mcmanager.clist = {}
+    return mcmanager
+end
+
+function cmanager:newCommunication(content, avatar_name)
+    model = model or self.model
+    local avatar_obj = avatar.getAvatar(avatar_name)
+    if not avatar_obj then
+        error("Avatar "..avatar_name.." not found")
+    end
+    local c = communication:new(model, avatar_obj)
+
 return communication

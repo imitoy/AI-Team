@@ -2,7 +2,6 @@ local api = {}
 
 local luapython = require "luapython"
 local models = require "models"
-local avatar = require "avatar"
 
 function api.select(model)
     local model_info = models[model]
@@ -13,12 +12,13 @@ api.openai = {}
 
 api.openai.__index = api.openai
 
-function api.openai.generatemessage(avatar_name)
-    return {{role = "system", content = avatar.getAvatar(avatar_name or "Default").system}}
+function api.openai.generatemessage(avatar)
+    return {{role = "system", content = avatar.system}}
 end
 
-function api.openai.create(model, model_name, avatar_name)
+function api.openai.create(model, avatar)
     local openai_api = {}
+    local model_name = avatar.model
     setmetatable(openai_api, api.openai)
     local OpenAI = luapython.import("openai.OpenAI")
     local client = OpenAI({
@@ -28,13 +28,32 @@ function api.openai.create(model, model_name, avatar_name)
     openai_api.client = client
     openai_api.model = model
     openai_api.model_name = model_name
-    openai_api.messages = api.openai.generatemessage(avatar_name)
+    openai_api.messages = api.openai.generatemessage(avatar)
+    
+    local tools = {}
+    for _, tool in ipairs(models.tools)do
+        local add = false
+        for _, tool_name in ipairs(avatar.tools)do
+            if tool_name == tool.name then
+                add = true
+                break
+            end
+        end
+        if add then
+            if tool.tool then
+                table.insert(tools, tool.tool)
+            end
+        end
+    end
+    if #tools == 0 then
+        tools = nil
+    end
     openai_api.completion_create = {
         model = model_name,
         messages = openai_api.messages,
         stream = true,
+        tools = tools
     }
-
     return openai_api
 end
 

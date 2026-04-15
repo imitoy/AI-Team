@@ -53,7 +53,20 @@ models.deepseek = {
             action = function (input)
                 local file_name = input.file_name
                 local content = input.content
-                -- Write content to the specified file
+                print("\\e[0;36mWriting file: ")
+                print(content)
+                print("-> will be written to: "..file_name)
+                print("Proceed?(Y/n)\\e[0m")
+                while true do
+                    local symbol = io.read()
+                    if string.upper(symbol) == "N" then
+                        return { success = false, message = "Tool calling denied by user" }
+                    else if string.upper(symbol) == "Y" or symbol == "" then
+                        break
+                    else
+                        print("Please enter Y or N:(Y/n)")
+                    end
+                end
                 local file, errmsg = io.open(file_name, "w")
                 if file then
                     file:write(content)
@@ -130,6 +143,22 @@ models.deepseek = {
                 local replace = input.replace
                 local content = input.content
                 -- Read the existing file content
+                print("\\e[0;36mEditing file: ")
+                print(replace)
+                print("-> will be replaced as ->")
+                print(content)
+                print("-> in: "..file_name)
+                print("Proceed?(Y/n)\\e[0m")
+                while true do
+                    local symbol = io.read()
+                    if string.upper(symbol) == "N" then
+                        return { success = false, message = "Tool calling denied by user" }
+                    else if string.upper(symbol) == "Y" or symbol == "" then
+                        break
+                    else
+                        print("Please enter Y or N:(Y/n)")
+                    end
+                end
                 local file, errmsg = io.open(file_name, "r")
                 if not file then
                     return { success = false, message = "Failed to read file:"..errmsg }
@@ -197,6 +226,20 @@ models.deepseek = {
             },
             action = function (input)
                 local command = input.command
+                print("\\e[0;36mRunning command: ")
+                print(command)
+                print("-> will be executed")
+                print("Proceed?(Y/n)\\e[0m")
+                while true do
+                    local symbol = io.read()
+                    if string.upper(symbol) == "N" then
+                        return { success = false, message = "Tool calling denied by user" }
+                    else if string.upper(symbol) == "Y" or symbol == "" then
+                        break
+                    else
+                        print("Please enter Y or N:(Y/n)")
+                    end
+                end
                 local p = io.popen(command)
                 if not p then
                     return { success = false, message = "Failed to run command" }
