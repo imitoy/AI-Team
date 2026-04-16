@@ -1,5 +1,6 @@
 {
     "Lua.diagnostics.disable": [
-        "different-requires"
+        "different-requires",
+        "trailing-space"
     ]
 }

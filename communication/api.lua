@@ -2,7 +2,7 @@ local api = {}
 
 local luapython = require "luapython"
 local models = require "models"
-local json = require "json"
+local json = require "cjson"
 
 function api.select(model)
     local model_info = models[model]
@@ -32,7 +32,7 @@ function api.openai.create(model, avatar)
     openai_api.messages = api.openai.generatemessage(avatar)
     
     local tools = {}
-    for _, tool in ipairs(models.tools)do
+    for _, tool in ipairs(model.tools)do
         local add = false
         for _, tool_name in ipairs(avatar.tools)do
             if tool_name == tool.name and tool.tool then
@@ -73,10 +73,14 @@ function api.openai:send(message)
             error("api.openai,send: model_name " .. model_name .. " not found")
         end
     end
-    table.insert(self.messages, {
-        role = "user",
-        content = message
-    })
+    if type(message) == "string" then
+        table.insert(self.messages, {
+            role = "user",
+            content = message
+        })
+    elseif type(message) ~= "nil" then
+        error("message: string expected")
+    end
     local response = self.client.chat.completions.create(self.completion_create)
     self.response = response
 end
@@ -90,31 +94,58 @@ function api.openai:get()
             reasoning = chunk.choices[0].delta.reasoning_content ~= nil
             local stream = chunk.choices[0].delta.content or chunk.choices[0].delta.reasoning_content or ""
             message = message .. (stream or "")
-            
+
             if chunk.choices[0].delta.tool_calls ~= nil then
                 for _, tool_call in ipairs(luapython.astable(chunk.choices[0].delta.tool_calls)) do
                     local index = tool_call.index + 1
                     tools[index] = tools[index] or {}
-                    tools[index].name = (tools[index].name or "") .. tool_call.name
-                    tools[index].arguments = (tools[index].arguments or "") .. tool_call.arguments
-                    tools[index].id = tools[index].id or tool_call.id
-                    stream = stream .. (tool_call.name or tool_call.arguments or "")
+                    tools[index].name = (tools[index].name or "") .. (tool_call['function'].name or "")
+                    tools[index].arguments = (tools[index].arguments or "") .. (tool_call['function'].arguments or "")
+                    tools[index].id = tools[index].id or (tool_call.id or "")
+                    stream = stream .. (tool_call['function'].name or tool_call['function'].arguments or "")
                 end
             end
 
             coroutine.yield(false, stream, reasoning)
         end
-        table.insert(self.messages, {
-            role = "assistant",
-            content = message
-        })
-        local index = 1
-        local function tool_call_callback()
-            local result = coroutine.yield(tools[index])
+
+        do
+            local tool_calls = nil
+            if #tools > 0 then
+                tool_calls = {}
+                for _, tool in ipairs(tools) do
+                    table.insert(tool_calls, {
+                        ["function"] = {
+                            name = tool.name,
+                            arguments = tool.arguments
+                        },
+                        id = tostring(tool.id),
+                        type = "function"
+                    })
+                end
+            end
             table.insert(self.messages, {
                 role = "assistant",
-                content = tools[index]
+                content = message,
+                tool_calls = tool_calls
             })
+        end
+
+        for _, tool in ipairs(tools) do
+            tool.arguments = json.decode(tool.arguments)
+        end
+
+        local function tool_call_callback()
+            for _, tool in ipairs(tools)do
+                local result = coroutine.yield(false, tool)
+                table.insert(self.messages, {
+                    role = "tool",
+                    content = result.content,
+                    tool_call_id = tool.id,
+                    name = tool.name
+                })
+            end
+            return true
         end
         local cocall = coroutine.create(tool_call_callback)
         return true, message, cocall
