@@ -88,12 +88,14 @@ end
 function api.openai:get()
     local function getf()
         local message = ""
+        local message_content = ""
         local reasoning = true
         local tools = {}
         for chunk in self.response() do
             reasoning = chunk.choices[0].delta.reasoning_content ~= nil
             local stream = chunk.choices[0].delta.content or chunk.choices[0].delta.reasoning_content or ""
             message = message .. (stream or "")
+            message_content = message_content .. (chunk.choices[0].delta.content or "")
 
             if chunk.choices[0].delta.tool_calls ~= nil then
                 for _, tool_call in ipairs(luapython.astable(chunk.choices[0].delta.tool_calls)) do
@@ -126,7 +128,7 @@ function api.openai:get()
             end
             table.insert(self.messages, {
                 role = "assistant",
-                content = message,
+                content = message_content,
                 tool_calls = tool_calls
             })
         end

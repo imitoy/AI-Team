@@ -1,6 +1,7 @@
 {
     "Lua.diagnostics.disable": [
         "different-requires",
-        "trailing-space"
+        "trailing-space",
+        "redundant-parameter"
     ]
 }

@@ -44,6 +44,7 @@ function communication:new(model, avatar_obj)
     mcommunication.avatar_name = avatar_name
     mcommunication.model_name = model.name
     mcommunication.model = model
+    mcommunication.id = os.time()
     local avatar_obj = avatar_obj
     if not avatar_obj then
         error("avatar " .. avatar_name .. " not found")
@@ -131,6 +132,29 @@ function communication:send(content)
     return message
 end
 
+local usercommunication = {}
+
+usercommunication.__index = usercommunication
+
+function usercommunication:new()
+    local musercommunication = {}
+    setmetatable(musercommunication, self)
+
+    musercommunication.id = 1
+    musercommunication.avatar_name = "用户"
+    return musercommunication
+end
+
+function usercommunication:send(content, reply_id)
+    print("\n\27[34m" .. content .. "\27[0m")
+    local content = io.read()
+    return json.encode({
+        content = content,
+        target = "项目经理",
+        reply_id = reply_id or "none"
+    })
+end
+
 local cmanager = {}
 
 cmanager.__index = cmanager
@@ -141,6 +165,8 @@ function cmanager:new(model)
     mcmanager.model = model
     mcmanager.clist = {}
     mcmanager.ccurrent = nil
+    table.insert(mcmanager.clist, usercommunication:new())
+    self.ccurrent = mcmanager.clist[1]
     return mcmanager
 end
 
@@ -153,9 +179,7 @@ function cmanager:newCommunication(content, avatar_name)
     local c = communication:new(model, avatar_obj)
     table.insert(self.clist, c)
     self.ccurrent = c
-    if content then
-        return self:send(content)
-    end
+    return c
 end
 
 function cmanager:terminateCommunication()
@@ -163,39 +187,57 @@ function cmanager:terminateCommunication()
     self.ccurrent = self.clist[#self.clist]
 end
 
-function cmanager:send(content)
+function cmanager:send(content, reply_id)
     local c = self.ccurrent
-    local message = c:send(content)
+    local message = c:send(content, reply_id)
     return message
+end
+
+function cmanager:getCurrentId()
+    if self.ccurrent then
+        return tostring(self.ccurrent.id)
+    end
+    return "none"
+end
+
+function cmanager:getCurrentAvatarName()
+    if self.ccurrent then
+        return self.ccurrent.avatar_name
+    end
+    return nil
 end
 
 function cmanager:start()
     print("Welcome to the AI Team Communication System!")
-    print("Type your message and press Enter to send:")
-    local content = io.read()
-    local avatar_name = "项目经理"
-    self:newCommunication(nil, avatar_name)
+    local content = "Type your message and press Enter to send:"
+    local reply_id = "none"
     while true do
         if #self.clist == 0 then
             print("No active communication. Exiting.")
             break
         end
-        local response = self:send(content)
+        local response = self:send(content, reply_id)
         print("\27[32mResponse: " .. response .. "\27[0m")
         if not AskProceed("continue") then
             break
         end
         response = json.decode(response)
-        if response.target == "上级" then
-            if #self.clist == 1 then
-                print("Please enter your message:")
-                content = io.read()
-            else
-                self:terminateCommunication()
-            end
-        else
+        reply_id = self:getCurrentId()
+        content = "from: "..self:getCurrentAvatarName().."\nreply_id: "..(self:getCurrentId()).."\ncontent: "..response.content
+        if response.reply_id == "none" or response.reply_id == nil then
             self:newCommunication(nil, response.target)
-            content = response.content
+        else
+            local find = false
+            for _, communication in ipairs(self.clist) do
+                if tostring(communication.id) == response.reply_id then
+                    self.ccurrent = communication
+                    find = true
+                end
+            end
+            if not find then
+                print("Reply ID "..response.reply_id.." not found. Starting new communication with target "..response.target)
+                self:newCommunication(nil, response.target)
+            end
         end
     end
 end

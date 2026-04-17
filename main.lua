@@ -7,8 +7,6 @@ local api = require("communication.api")
 local communication = require("communication.communication")
 local luapython = require("luapython")
 luapython.load()
---os.exit(0)
---local json = luapython.import("cjson")
 
 local c = communication:new(models.deepseek)
 c:start()
