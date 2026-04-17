@@ -219,7 +219,9 @@ function cmanager:start()
         local response = self:send(content, reply_id)
         print("\27[32mResponse: " .. response .. "\27[0m")
         if not AskProceed("continue") then
-            break
+            print("Enter your message: ")
+            content = io.read()
+            self:send(content)
         end
         response = json.decode(response)
         reply_id = self:getCurrentId()
