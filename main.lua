@@ -1,12 +1,24 @@
-package.path = "./communication/?.lua;/usr/local/share/lua/5.4/?.lua;/usr/local/share/lua/5.4/?/init.lua;/usr/share/lua/5.4/?.lua;/usr/share/lua/5.4/?/init.lua;/usr/local/lib/lua/5.4/?.lua;/usr/local/lib/lua/5.4/?/init.lua;/usr/lib/lua/5.4/?.lua;/usr/lib/lua/5.4/?/init.lua;./?.lua;./?/init.lua"
-package.cpath = "/usr/local/lib/lua/5.4/?.so;/usr/lib/lua/5.4/?.so;/usr/local/lib/lua/5.4/loadall.so;/usr/lib/lua/5.4/loadall.so;./?.so"
-
-local models = require("communication.models")
-local avatar = require("communication.avatar")
-local api = require("communication.api")
-local communication = require("communication.communication")
-local luapython = require("luapython")
+luapython = require("luapython")
 luapython.load()
 
-local c = communication:new(models.deepseek)
-c:start()
+local models = require("models")
+local api = require("api")
+local communication = require("communication")
+
+local c = communication:new(models.deepseek_v4_flash, "organizer")
+print("Communication created with model:", c.model_name)
+
+while true do
+    io.write("Enter your message (or type 'exit' to quit): ")
+    local user_input = io.read()
+    if user_input == "exit" then
+        break
+    end
+
+    c.api:appendUserMessage(user_input)
+    c.api:send()
+
+    -- Assuming the API returns a response in c.api.messages
+    local last_message = c.api.messages[#c.api.messages]
+    print("Model response:", last_message.content)
+end
