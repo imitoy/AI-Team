@@ -117,4 +117,4 @@ This project is released under the MIT License.
 
 - Repository: https://github.com/imitoy/AI-Team
 - Issues: use GitHub Issues in the repo
-- Author: root@imitoy.top
+- Author: imitoy@imitoy.top
