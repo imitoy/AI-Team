@@ -27,9 +27,9 @@ local roles = {
 7. Provide actionable implementation plans for the Coder
 
 Use read_file to examine existing code and list_directory to explore
-the project structure. Use write_file to create design documents.
+the project structure. Use write_architect to create design documents.
 Be precise and thorough in your specifications.]],
-        tools = {"read_file", "write_file", "list_directory"},
+        tools = {"read_architect", "write_architect", "list_directory", "read_file", "call_role_architect"},
         provider = nil,
         model = nil,
     },
@@ -47,10 +47,10 @@ Be precise and thorough in your specifications.]],
 7. Implement security fixes as directed by the Architect
 
 Write complete, production-quality code. Include error handling, input validation,
-and appropriate comments. Use read_file to examine code, write_file and patch_file
-to create and modify files, search_files to find relevant code, execute_command to
+and appropriate comments. Use read_file to examine code, write_file and edit_file
+to create and modify files, run_command to
 run builds and tests, and list_directory to explore the project structure.]],
-        tools = {"read_file", "write_file", "patch_file", "search_files", "execute_command", "list_directory"},
+        tools = {"read_file", "write_file", "edit_file", "run_command", "list_directory", "call_role_coder"},
         provider = nil,
         model = nil,
     },
@@ -72,7 +72,7 @@ run builds and tests, and list_directory to explore the project structure.]],
 11. Compile all results and report back to the user
 
 Always coordinate via call_role. Never skip steps. Keep the user informed of progress after each major phase.]],
-        tools = {},
+        tools = {"call_role_organizer"},
         provider = nil,
         model = nil,
     },
@@ -90,11 +90,10 @@ Always coordinate via call_role. Never skip steps. Keep the user informed of pro
 7. Verify documentation is adequate and up-to-date
 8. Provide clear, actionable feedback for the Coder
 
-Use read_file to examine code files, search_files to find relevant code
-patterns, and list_directory to explore the project structure.
+Use read_file to examine code files, and list_directory to explore the project structure.
 Be thorough but constructive in your reviews. If the code passes review,
 state clearly that it is approved.]],
-        tools = {"read_file", "search_files", "list_directory"},
+        tools = {"read_file", "list_directory", "call_role_reviewer"},
         provider = nil,
         model = nil,
     },
@@ -113,10 +112,8 @@ state clearly that it is approved.]],
 8. Provide a detailed security assessment report with severity ratings
 9. Recommend specific fixes for each vulnerability found
 
-Use read_file to examine code, search_files to find security-sensitive patterns,
-execute_command to run security tools, and list_directory to explore the project structure.
-Be thorough — even minor issues should be documented.]],
-        tools = {"read_file", "search_files", "execute_command", "list_directory"},
+Use read_file to examine code, run_command to run security tools, and list_directory to explore the project structure. Be thorough — even minor issues should be documented.]],
+        tools = {"read_file", "run_command", "list_directory", "call_role_security"},
         provider = nil,
         model = nil,
     },
@@ -135,11 +132,11 @@ Be thorough — even minor issues should be documented.]],
 8. Provide a comprehensive test report with pass/fail details
 9. Report any issues found back to the team
 
-Use read_file to examine test files and source code, execute_command to run test
-suites and build processes, search_files to find test patterns and assertions,
+Use read_file to examine test files and source code, run_command to run test
+suites and build processes,
 and list_directory to explore the project structure.
 Be systematic — run tests in order of dependency and report results clearly.]],
-        tools = {"read_file", "execute_command", "search_files", "list_directory"},
+        tools = {"read_file", "run_command", "list_directory", "call_role_tester"},
         provider = nil,
         model = nil,
     },

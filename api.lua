@@ -34,11 +34,14 @@ function api.openai.create(model, role_name)
     openai_api.model = model
     openai_api.model_name = model_name
     openai_api.messages = api.openai.generatemessage(role_name)
+    openai_api.role_name = role_name
+    openai_api.tools_index = {}
     
     local ctools = {}
-    for _, tool in ipairs(tools)do
-        if tool.tool then
-            table.insert(ctools, tool.tool)
+    for _, tool_name in ipairs(roles[role_name].tools)do
+        if tools[tool_name] and tools[tool_name].tool then
+            table.insert(ctools, tools[tool_name].tool)
+            openai_api.tools_index[tools[tool_name].tool["function"].name] = tool_name
         end
     end
     if #ctools == 0 then
@@ -58,6 +61,7 @@ end
 function api.openai:appendUserMessage(message)
     table.insert(self.messages, {role = "user", content = message})
     self.completion_create.messages = self.messages
+    print("[INFO] Role: ", self.role_name)
     print("[INFO] User message appended:", message)
 end
 
@@ -87,14 +91,17 @@ function api.openai:send()
     table.insert(self.messages, message)
     if message.tool_calls then
         for _, tool_call in ipairs(luapython.astable(message.tool_calls)) do
+            print("[INFO] Role: ", self.role_name)
             print("[INFO] Tool call received:", tool_call["function"].name, tool_call["function"].arguments)
             local arguments = json.decode(tool_call["function"].arguments)
-            self:onTool(tool_call.id, tool_call["function"].name, arguments)
+            self:onTool(tool_call.id, self.tools_index[tool_call["function"].name], arguments)
         end
         self:send()
     elseif message.content and #message.content > 0 then
+        print("[INFO] Role: ", self.role_name)
         print("[INFO] Model response:", message.content)
     elseif message.reasoning_content and #message.reasoning_content > 0 then
+        print("[INFO] Role: ", self.role_name)
         print("[INFO] Model reasoning content:", message.reasoning_content)
     end
 end
@@ -108,6 +115,7 @@ function api.openai:toolcall(id, name, content)
     }
     table.insert(self.messages, message)
     self.completion_create.messages = self.messages
+    print("[INFO] Role: ", self.role_name)
     print("[INFO] Tool call response appended:", name, content)
 end
 
