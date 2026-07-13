@@ -27,6 +27,9 @@ local tool_files = {
     "browser_back",
     "browser_press",
     "browser_console",
+    -- Claude Code coding tools
+    "glob_files",
+    "grep_search",
 }
 
 for _, name in ipairs(tool_files) do

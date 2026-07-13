@@ -29,7 +29,7 @@ local roles = {
 Use read_file to examine existing code and list_directory to explore
 the project structure. Use write_architect to create design documents.
 Be precise and thorough in your specifications.]],
-        tools = {"read_architect", "write_architect", "list_directory", "read_file", "call_role_architect"},
+        tools = {"read_architect", "write_architect", "glob_files", "grep_search", "read_file", "call_role_architect"},
         provider = nil,
         model = nil,
     },
@@ -50,7 +50,7 @@ Write complete, production-quality code. Include error handling, input validatio
 and appropriate comments. Use read_file to examine code, write_file and edit_file
 to create and modify files, run_command to
 run builds and tests, and list_directory to explore the project structure.]],
-        tools = {"read_file", "write_file", "edit_file", "run_command", "list_directory", "call_role_coder"},
+        tools = {"read_file", "write_file", "edit_file", "run_command", "glob_files", "grep_search", "call_role_coder"},
         provider = nil,
         model = nil,
     },
@@ -93,7 +93,7 @@ Always coordinate via call_role. Never skip steps. Keep the user informed of pro
 Use read_file to examine code files, and list_directory to explore the project structure.
 Be thorough but constructive in your reviews. If the code passes review,
 state clearly that it is approved.]],
-        tools = {"read_file", "list_directory", "call_role_reviewer"},
+        tools = {"read_file", "glob_files", "grep_search", "call_role_reviewer"},
         provider = nil,
         model = nil,
     },
@@ -113,7 +113,7 @@ state clearly that it is approved.]],
 9. Recommend specific fixes for each vulnerability found
 
 Use read_file to examine code, run_command to run security tools, and list_directory to explore the project structure. Be thorough — even minor issues should be documented.]],
-        tools = {"read_file", "run_command", "list_directory", "call_role_security"},
+        tools = {"read_file", "run_command", "glob_files", "grep_search", "call_role_security"},
         provider = nil,
         model = nil,
     },
@@ -136,7 +136,7 @@ Use read_file to examine test files and source code, run_command to run test
 suites and build processes,
 and list_directory to explore the project structure.
 Be systematic — run tests in order of dependency and report results clearly.]],
-        tools = {"read_file", "run_command", "list_directory", "call_role_tester"},
+        tools = {"read_file", "run_command", "glob_files", "grep_search", "call_role_tester"},
         provider = nil,
         model = nil,
     },
