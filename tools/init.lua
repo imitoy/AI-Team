@@ -33,7 +33,10 @@ local tool_files = {
 }
 
 for _, name in ipairs(tool_files) do
-    table.insert(tools, require("tools." .. name))
+    local ok, result = pcall(require, "tools." .. name)
+    if ok then
+        table.insert(tools, result)
+    end
 end
 
 -- Set up metatable for name-based access
