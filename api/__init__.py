@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from models import MODELS
+from provider import MODELS
 
 
 def create_api(model_key: str, role_name: str):

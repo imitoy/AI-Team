@@ -10,7 +10,7 @@ from typing import Any
 
 from zhipuai import ZhipuAI
 
-from models import MODELS
+from provider import MODELS
 from roles import get_role
 from tools import get_tool
 
