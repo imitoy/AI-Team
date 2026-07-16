@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import time
 
-from api import OpenAIAPI
+from api import create_api
 from models import MODELS
 
 
@@ -45,7 +45,7 @@ class Communication:
         self.role_name = role_name
         self.model_key = model_key
         self.model = MODELS[model_key]
-        self.api = OpenAIAPI(model_key, role_name)
+        self.api = create_api(model_key, role_name)
         self.id = int(time.time())
 
     def append_user_message(self, message: str):

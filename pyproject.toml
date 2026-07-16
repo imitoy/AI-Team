@@ -5,6 +5,7 @@ description = "AI-Team: multi-role AI agent team with tool calling"
 requires-python = ">=3.10"
 dependencies = [
     "openai>=1.0",
+    "zhipuai>=2.1",
 ]
 
 [project.scripts]

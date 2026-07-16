@@ -18,4 +18,16 @@ MODELS = {
         "api_type": "openai",
         "api_key": os.getenv("OPENROUTER_API_KEY", ""),
     },
+    "glm_5": {
+        "name": "glm-5",
+        "description": "Zhipu GLM-5",
+        "api_type": "glm",
+        "api_key": os.getenv("GLM_API_KEY", os.getenv("ZHIPUAI_API_KEY", "")),
+    },
+    "glm_5_flash": {
+        "name": "glm-5-flash",
+        "description": "Zhipu GLM-5 Flash (fast)",
+        "api_type": "glm",
+        "api_key": os.getenv("GLM_API_KEY", os.getenv("ZHIPUAI_API_KEY", "")),
+    },
 }
