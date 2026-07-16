@@ -22,7 +22,7 @@ ROLES: list[dict] = [
 Use read_file to examine existing code, glob_files and grep_search to explore
 the project structure. Use write_architect to create design documents.
 Be precise and thorough in your specifications.""",
-        "tools": ["read_architect", "write_architect", "glob_files", "grep_search", "read_file", "call_role_architect"],
+        "tools": ["read_architect", "write_architect", "glob_files", "grep_search", "read_file", "browser_navigate", "browser_snapshot", "browser_click", "browser_type", "browser_scroll", "browser_back", "browser_press", "browser_console", "call_role_architect"],
     },
     {
         "name": "coder",
@@ -41,7 +41,7 @@ Write complete, production-quality code. Include error handling, input validatio
 and appropriate comments. Use read_file to examine code, write_file and edit_file
 to create and modify files, run_command to run builds and tests,
 glob_files and grep_search to explore the project structure.""",
-        "tools": ["read_file", "write_file", "edit_file", "run_command", "glob_files", "grep_search", "call_role_coder"],
+        "tools": ["read_file", "write_file", "edit_file", "run_command", "glob_files", "grep_search", "browser_navigate", "browser_snapshot", "browser_click", "browser_type", "browser_scroll", "browser_back", "browser_press", "browser_console", "call_role_coder"],
     },
     {
         "name": "organizer",
@@ -61,7 +61,7 @@ glob_files and grep_search to explore the project structure.""",
 11. Compile all results and report back to the user
 
 Always coordinate via call_role. Never skip steps. Keep the user informed of progress after each major phase.""",
-        "tools": ["call_role_organizer"],
+        "tools": ["call_role_organizer", "browser_navigate", "browser_snapshot", "browser_click", "browser_type", "browser_scroll", "browser_back", "browser_press"],
     },
     {
         "name": "reviewer",
@@ -80,7 +80,7 @@ Always coordinate via call_role. Never skip steps. Keep the user informed of pro
 Use read_file to examine code files, glob_files and grep_search to explore the project structure.
 Be thorough but constructive in your reviews. If the code passes review,
 state clearly that it is approved.""",
-        "tools": ["read_file", "glob_files", "grep_search", "call_role_reviewer"],
+        "tools": ["read_file", "glob_files", "grep_search", "browser_navigate", "browser_snapshot", "browser_click", "browser_type", "browser_scroll", "browser_back", "browser_press", "browser_console", "call_role_reviewer"],
     },
     {
         "name": "security",
@@ -100,7 +100,7 @@ state clearly that it is approved.""",
 Use read_file to examine code, run_command to run security tools,
 glob_files and grep_search to explore the project structure.
 Be thorough — even minor issues should be documented.""",
-        "tools": ["read_file", "run_command", "glob_files", "grep_search", "call_role_security"],
+        "tools": ["read_file", "run_command", "glob_files", "grep_search", "browser_navigate", "browser_snapshot", "browser_click", "browser_type", "browser_scroll", "browser_back", "browser_press", "browser_console", "call_role_security"],
     },
     {
         "name": "tester",
@@ -120,7 +120,7 @@ Be thorough — even minor issues should be documented.""",
 Use read_file to examine test files and source code, run_command to run test
 suites and build processes, glob_files and grep_search to explore the project structure.
 Be systematic — run tests in order of dependency and report results clearly.""",
-        "tools": ["read_file", "run_command", "glob_files", "grep_search", "call_role_tester"],
+        "tools": ["read_file", "run_command", "glob_files", "grep_search", "browser_navigate", "browser_snapshot", "browser_click", "browser_type", "browser_scroll", "browser_back", "browser_press", "browser_console", "call_role_tester"],
     },
 ]
 
