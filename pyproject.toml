@@ -1,0 +1,11 @@
+[project]
+name = "ai-team"
+version = "0.1.0"
+description = "AI-Team: multi-role AI agent team with tool calling"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.0",
+]
+
+[project.scripts]
+ai-team = "main:main"
