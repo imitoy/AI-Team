@@ -122,3 +122,20 @@ class GLMAPI:
                 retry = input("Retry? (Y/n): ").strip()
                 if retry.lower() == "n":
                     raise
+
+    @staticmethod
+    def list_models(api_key: str, base_url: str) -> list[dict]:
+        """List available models from the ZhipuAI API using the OpenAI-compatible endpoint."""
+        import requests
+        url = base_url.rstrip("/") + "/models"
+        headers = {"Authorization": f"Bearer {api_key}"}
+        models = []
+        try:
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                for m in data.get("data", []):
+                    models.append({"id": m.get("id", ""), "owned_by": m.get("owned_by", "zhipu")})
+        except Exception as e:
+            print(f"[WARN] Failed to list ZhipuAI models: {e}")
+        return models

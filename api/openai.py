@@ -114,3 +114,18 @@ class OpenAIAPI:
                 retry = input("Retry? (Y/n): ").strip()
                 if retry.lower() == "n":
                     raise
+
+    @staticmethod
+    def list_models(api_key: str, base_url: str) -> list[dict]:
+        """List available models from the API endpoint."""
+        client = OpenAI(api_key=api_key, base_url=base_url)
+        models = []
+        try:
+            for m in client.models.list():
+                models.append({
+                    "id": m.id,
+                    "owned_by": getattr(m, "owned_by", ""),
+                })
+        except Exception as e:
+            print(f"[WARN] Failed to list models from {base_url}: {e}")
+        return models

@@ -184,7 +184,23 @@ class AnthropicAPI:
         elif role == "user":
             content = msg.get("content", "")
             if isinstance(content, list):
-                # Tool result message — keep as user for compatibility
                 return {"role": "user", "content": json.dumps(content)}
             return {"role": "user", "content": str(content)}
         return msg
+
+    @staticmethod
+    def list_models(api_key: str, base_url: str) -> list[dict]:
+        """List available models from the Anthropic API."""
+        from anthropic import Anthropic
+        client = Anthropic(api_key=api_key)
+        models = []
+        try:
+            for m in client.models.list():
+                models.append({
+                    "id": m.id,
+                    "display_name": m.display_name,
+                    "created_at": str(m.created_at) if m.created_at else "",
+                })
+        except Exception as e:
+            print(f"[WARN] Failed to list Anthropic models: {e}")
+        return models
