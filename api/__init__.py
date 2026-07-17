@@ -13,7 +13,7 @@ def create_api(model_key: str, role_name: str):
         role_name: The role to configure system prompt and tools for.
 
     Returns:
-        An API client instance (OpenAIAPI or GLMAPI).
+        An API client instance (OpenAIAPI, GLMAPI, or AnthropicAPI).
     """
     model = MODELS[model_key]
     api_type = model.get("api_type", "openai")
@@ -21,6 +21,9 @@ def create_api(model_key: str, role_name: str):
     if api_type == "glm":
         from api.glm import GLMAPI
         return GLMAPI(model_key, role_name)
+    elif api_type == "anthropic":
+        from api.anthropic import AnthropicAPI
+        return AnthropicAPI(model_key, role_name)
     else:
         from api.openai import OpenAIAPI
         return OpenAIAPI(model_key, role_name)
