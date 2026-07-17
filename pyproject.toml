@@ -8,6 +8,7 @@ dependencies = [
     "zhipuai>=2.1",
     "mcp>=1.0",
     "anthropic>=0.100",
+    "platformdirs>=4.0",
 ]
 
 [project.scripts]
