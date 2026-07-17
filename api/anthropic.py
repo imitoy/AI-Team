@@ -65,6 +65,43 @@ class AnthropicAPI:
         print(f"[INFO] Role: {self.role_name}")
         print(f"[INFO] User message appended: {message}")
 
+    def load_messages(self, messages: list[dict]):
+        """Restore message history from a saved session (OpenAI format -> Anthropic)."""
+        self._messages = []
+        for msg in messages:
+            role = msg.get("role", "")
+            if role == "system":
+                self._system_prompt = msg.get("content", "")
+            elif role == "user":
+                self._messages.append({"role": "user", "content": msg.get("content", "")})
+            elif role == "assistant":
+                anthropic_content = []
+                text = msg.get("content")
+                if text:
+                    anthropic_content.append({"type": "text", "text": text})
+                for tc in msg.get("tool_calls", []):
+                    fn = tc.get("function", {})
+                    anthropic_content.append({
+                        "type": "tool_use",
+                        "id": tc.get("id", ""),
+                        "name": fn.get("name", ""),
+                        "input": json.loads(fn.get("arguments", "{}")),
+                    })
+                self._messages.append({"role": "assistant", "content": anthropic_content})
+            elif role == "tool":
+                # Tool result in Anthropic: user message with tool_result blocks
+                tool_name = msg.get("name", "unknown")
+                self._messages.append({
+                    "role": "user",
+                    "content": [{
+                        "type": "tool_result",
+                        "tool_use_id": msg.get("tool_call_id", ""),
+                        "content": msg.get("content", ""),
+                    }],
+                })
+        print(f"[INFO] Role: {self.role_name}")
+        print(f"[INFO] Loaded {len(messages)} messages from session")
+
     def send(self):
         """Send conversation and handle tool calls recursively."""
         while True:

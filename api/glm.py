@@ -54,6 +54,12 @@ class GLMAPI:
         print(f"[INFO] Role: {self.role_name}")
         print(f"[INFO] User message appended: {message}")
 
+    def load_messages(self, messages: list[dict]):
+        """Restore message history from a saved session."""
+        self.messages = list(messages)
+        print(f"[INFO] Role: {self.role_name}")
+        print(f"[INFO] Loaded {len(messages)} messages from session")
+
     def send(self):
         """Send the conversation to the model and handle tool calls recursively."""
         while True:
