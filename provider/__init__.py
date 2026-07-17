@@ -17,9 +17,17 @@ import importlib
 
 # Ordered list of provider modules to load
 _PROVIDER_MODULES = [
+    "anthropic",
     "deepseek",
     "openrouter",
     "glm",
+    "xai",
+    "minimax",
+    "kimi",
+    "alibaba",
+    "stepfun",
+    "xiaomi",
+    "novita",
 ]
 
 # Aggregated model registry: model_key -> {name, description, api_type, base_url, api_key, ...}
