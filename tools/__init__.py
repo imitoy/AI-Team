@@ -36,6 +36,7 @@ _TOOL_MODULES = [
     # Claude Code coding tools
     "glob_files",
     "grep_search",
+    "check_tool_status",
 ]
 
 _registry: dict[str, Any] = {}
