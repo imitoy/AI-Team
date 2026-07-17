@@ -1,120 +1,179 @@
-# AI Team — Lua-based Multi-AI Collaboration Framework
+# AI-Team — Multi-Role AI Agent Team
 
-AI Team is a lightweight framework (Lua + luapython) that simulates a software development team using multiple AI roles. Each role (project manager, architect, lead, engineer, writer, reviewer) coordinates via structured messages and callable tools to automate project tasks such as task decomposition, file edits, and code review. The project currently uses DeepSeek-compatible APIs but is designed to support OpenAI-compatible endpoints as well.
+A Python framework that simulates a full software development team using multiple AI roles — Architect, Coder, Organizer, Reviewer, Security, Tester — each with tailored system prompts and tool sets. Roles coordinate via tool calling (function calling) to automate complex software engineering tasks.
 
 ## Key Features
 
-- Role-based collaboration: distinct AI roles with clear responsibilities.
-- Tool execution: safe wrappers for file operations and shell commands.
-- Pluggable models: add or switch AI backends in `communication/models.lua`.
-- Interactive workflow: prompts user confirmation for sensitive actions.
+- **6 roles**: Architect, Coder, Organizer, Reviewer, Security, Tester
+- **26 built-in tools**: file I/O, shell commands, glob/grep search, browser automation, MCP support
+- **Multi-provider**: DeepSeek, GLM (Zhipu), OpenRouter (4 providers, 10 models)
+- **Inter-role delegation**: `call_role_*` tools let roles delegate tasks to each other
+- **Browser tools**: web navigation via `agent-browser` (accessibility tree snapshots)
+- **MCP integration**: connect to MCP servers to discover and use external tools dynamically
+- **Auto MR script**: `scripts/create-mr.py` for automated GitLab merge requests
 
 ## Quick Start
 
-Requirements
+### Requirements
 
-- Linux (recommended)
-- Lua 5.4
-- Python 3.x
-- luarocks
-- Dependencies: `luapython`, `lua-cjson`, `python-openai` (or DeepSeek client)
+- Python 3.10+
+- pip
 
-Install (example for Arch Linux)
+### Install
 
 ```bash
-sudo pacman -Syu
-sudo pacman -S lua5.4 luarocks python
-sudo luarocks install luapython --lua-version 5.4
-sudo luarocks install lua-cjson --lua-version 5.4
-pip install openai
+cd AI-Team
+pip install -e .
+# or just:
+pip install openai zhipuai mcp
 ```
 
-Set API key (example environment variable)
+### Set API Key
 
 ```bash
-export DEEPSEEK_APIKEY="your_api_key_here"
+export DEEPSEEK_API_KEY="sk-..."
+export GLM_API_KEY="your-glm-key"          # optional
+export OPENROUTER_API_KEY="sk-or-..."      # optional
 ```
 
-Run the project
+### Run
 
 ```bash
-cd AI-Team.lua || cd .
-mkdir -p work
-cd work
-lua5.4 ../main.lua
+python3 main.py
 ```
 
-When prompted, describe the project you want the AI team to implement (for example: "Build a simple Snake game").
+The Organizer role will greet you. Describe your project and the team coordinates automatically.
+
+### Non-interactive mode (skip approval prompts)
+
+```bash
+AI_TEAM_AUTO_APPROVE=1 python3 main.py
+```
 
 ## Project Structure
 
-The repository is organized as follows:
-
 ```
-AI-Team.lua
-main.lua
-api.lua
-communication.lua
-models.lua
-roles.lua
-tools.lua
-README.md
+AI-Team/
+├── main.py                  # REPL entry point
+├── roles.py                 # 6 role definitions (name, system_prompt, tools)
+├── communication.py         # Communication manager, AskProceed, role delegation
+│
+├── provider/                # Model provider definitions
+│   ├── __init__.py          # Auto-loads all providers, merges into MODELS
+│   ├── deepseek.py          # DeepSeek V4 (3 models)
+│   ├── glm.py               # GLM/Zhipu (3 models)
+│   └── openrouter.py        # OpenRouter (4 models)
+│
+├── api/                     # API backends
+│   ├── __init__.py          # Factory: create_api(model_key, role_name)
+│   ├── openai.py            # OpenAIAPI — OpenAI-compatible endpoints
+│   └── glm.py               # GLMAPI — Zhipu SDK with thinking mode support
+│
+├── tools/                   # Tool implementations
+│   ├── __init__.py          # Tool registry (auto-discovery)
+│   ├── read_file.py         # Read file
+│   ├── write_file.py        # Write file
+│   ├── edit_file.py         # Edit file (find-and-replace)
+│   ├── run_command.py       # Shell command execution
+│   ├── list_files.py        # List directory recursively
+│   ├── glob_files.py        # Find files by glob pattern
+│   ├── grep_search.py       # Search file contents by regex
+│   ├── read_architect.py    # Read ARCHITECT.md
+│   ├── write_architect.py   # Write ARCHITECT.md
+│   ├── get_weather.py       # Mock weather lookup (testing)
+│   ├── kill_process.py      # Kill detached process
+│   ├── call_role.py         # 6 call_role_* tools (dynamic)
+│   ├── browser_navigate.py  # Navigate to URL
+│   ├── browser_snapshot.py  # Get page accessibility tree
+│   ├── browser_click.py     # Click element by ref
+│   ├── browser_type.py      # Type into input
+│   ├── browser_scroll.py    # Scroll page
+│   ├── browser_back.py      # Go back in history
+│   ├── browser_press.py     # Press keyboard key
+│   ├── browser_console.py   # Get console/JS errors
+│   ├── browser.py           # agent-browser CLI wrapper
+│   └── mcp/                 # MCP client
+│       └── __init__.py      # MCPManager, stdio/HTTP transport
+│
+├── scripts/
+│   ├── create-mr.py         # Auto GitLab MR creator
+│   └── setup-git-hook.sh    # Install git post-push hook
+│
+└── pyproject.toml
 ```
 
-Key modules
+## Providers & Models
 
-- `main.lua` — program entry point
-- `communication.lua` — orchestrates messages between roles
-- `models.lua` — model and tool configurations
-- `api.lua` — API adapter for OpenAI/DeepSeek-style endpoints
-- `tools.lua` — implementations of callable tools (file ops, commands)
+| Provider | api_type | Models |
+|----------|----------|--------|
+| DeepSeek | openai | `deepseek-v4-flash`, `deepseek-v4`, `deepseek-reasoner` |
+| OpenRouter | openai | `deepseek/deepseek-v4-flash`, `anthropic/claude-sonnet-4`, `openai/gpt-4o`, `google/gemini-2-pro` |
+| GLM | glm | `glm-5`, `glm-5-flash`, `glm-4-air` |
 
-## Roles
+Configure in `provider/<name>.py`. Each provider defines `PROVIDER` dict with `api_type`, `base_url`, `env_key`, `api_key`, and `models`.
 
-The system defines several cooperating roles (configured in `communication/avatar.lua`):
+## Tools by Role
 
-- Project Manager: translates user goals into tasks and priorities.
-- System Architect: produces high-level designs and component interactions.
-- Development Lead: decomposes tasks into file-level work and assigns engineers.
-- Development Engineer: performs file edits and implements features.
-- Documentation Writer: produces project documentation.
-- Code Reviewer: inspects code and provides suggestions.
+| Role | Tools | Count |
+|------|-------|-------|
+| Architect | read_architect, write_architect, glob_files, grep_search, read_file, 8 browser, call_role | 14 |
+| Coder | read_file, write_file, edit_file, run_command, glob_files, grep_search, 8 browser, call_role | 15 |
+| Organizer | call_role, 7 browser (no browser_console) | 8 |
+| Reviewer | read_file, glob_files, grep_search, 8 browser, call_role | 12 |
+| Security | read_file, run_command, glob_files, grep_search, 8 browser, call_role | 13 |
+| Tester | read_file, run_command, glob_files, grep_search, 8 browser, call_role | 13 |
 
-## Configuration & Extensibility
+## MCP Support
 
-- Add or modify roles in `communication/avatar.lua`.
-- Add tools or change their behavior in `communication/models.lua` (see the `tools` array).
-- Add new model entries (base URL, auth, models, tools) in `communication/models.lua` to support additional AI backends.
+AI-Team can connect to MCP (Model Context Protocol) servers to discover and use external tools. Configure servers in `mcp_servers.json`:
 
-Example tool entry (conceptual):
-
-```lua
+```json
 {
-  name = "write_file",
-  description = "Create or overwrite a file",
-  action = function(params) -- params: {path = "", content = ""}
-    -- implement safe write
-  end
+    "time": {
+        "command": "uvx",
+        "args": ["mcp-server-time"]
+    },
+    "github": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-github"],
+        "env": {
+            "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..."
+        }
+    },
+    "my_api": {
+        "url": "https://mcp.example.com/mcp",
+        "headers": {
+            "Authorization": "Bearer sk-..."
+        }
+    }
 }
 ```
 
-## Safety and Costs
+MCP tools are registered as `mcp_{server}_{tool}` (e.g., `mcp_time_get_current_time`).
 
-- API usage may incur costs; monitor usage and set quotas where possible.
-- The framework can run file and shell operations — review prompts carefully before confirming.
+## Auto MR Script
 
-## Contributing
+```bash
+# Create MR from current branch to upstream
+python3 scripts/create-mr.py
 
-1. Open an issue describing your feature or bug.
-2. Fork the repo and create a branch for your changes.
-3. Add tests or a reproducible demo when relevant.
+# With custom title
+python3 scripts/create-mr.py --source feat-branch --title "My feature"
+
+# Install auto-MR on every push
+bash scripts/setup-git-hook.sh
+```
+
+## Configuration
+
+| Env Variable | Description |
+|-------------|-------------|
+| `DEEPSEEK_API_KEY` | DeepSeek API key |
+| `GLM_API_KEY` / `ZHIPUAI_API_KEY` | GLM/Zhipu API key |
+| `OPENROUTER_API_KEY` | OpenRouter API key |
+| `AI_TEAM_AUTO_APPROVE` | Set to `1` to skip tool approval prompts |
+| `MCP_SERVERS_JSON` | JSON string of MCP server configs |
 
 ## License
 
-This project is released under the MIT License.
-
-## Contact
-
-- Repository: https://github.com/imitoy/AI-Team
-- Issues: use GitHub Issues in the repo
-- Author: imitoy@imitoy.top
+MIT License — see [LICENSE](LICENSE)
