@@ -8,6 +8,13 @@ def main():
     model_key = "deepseek_v4_flash"
     role_name = "organizer"
 
+    # Auto-configure MCP tools if mcp_servers.json exists
+    try:
+        from tools import mcp
+        mcp.configure()
+    except Exception:
+        pass
+
     comm = Communication.get_or_create(model_key, role_name)
     print(f"Communication created with model: {comm.model['name']}")
     print(f"Role: {role_name}")

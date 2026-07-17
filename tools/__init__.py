@@ -57,6 +57,19 @@ def _load_all():
         except Exception as e:
             print(f"[WARN] Failed to load tool '{mod_name}': {e}")
 
+    # ---- Load MCP tools (if MCP package is available) ----
+    _load_mcp_tools()
+
+
+def _load_mcp_tools():
+    """Discover and register MCP tools if MCP servers are configured."""
+    try:
+        from tools.mcp import _MCP_MANAGER, _register_to_global
+        if _MCP_MANAGER is not None:
+            _register_to_global()
+    except Exception as e:
+        print(f"[INFO] MCP tools not loaded: {e}")
+
 
 def get_tool(name: str):
     """Look up a tool by name. Returns the tool object or None."""

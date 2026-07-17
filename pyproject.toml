@@ -6,6 +6,7 @@ requires-python = ">=3.10"
 dependencies = [
     "openai>=1.0",
     "zhipuai>=2.1",
+    "mcp>=1.0",
 ]
 
 [project.scripts]
